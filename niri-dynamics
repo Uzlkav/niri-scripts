@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# Usage:
+# ./niri-dynamics dynamic-file.kdl
+# Name of file passed should be the name when the file is ON
+
+# Takes one argument as the name of a file in ~/.config/niri/dynamics/ and adds
+# or removes `no-` to the start of its name. If the file is then included as optional,
+# this allows toggling any niri option at runtime.
+
+dynamic_file="$HOME/.config/niri/dynamic/$1"
+
+if [ -f "$dynamic_file" ]; then                         # Check if file exists
+    # File is ON
+    new_name="$HOME/.config/niri/dynamic/no-$1"         # Prepend no
+    echo "$new_name"
+    mv "$dynamic_file" "$new_name"
+else
+    # File if OFF
+    actual_name="$HOME/.config/niri/dynamic/no-$1"
+    echo "$new_name"
+    mv "$actual_name" "$dynamic_file"
+fi
