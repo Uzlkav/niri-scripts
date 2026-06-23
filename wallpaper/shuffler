@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#
+# ~/scripts/wallpaper/shuffler
+
+
+# Variables
+SCRIPT_LOCATION="$HOME/scripts/wallpaper"
+WALLPAPER_DIR="${2:-"/home/$USER/Pictures/Wallpapers"}"
+SHUFFLE_FILE="${WALLPAPER_DIR}/.shuffler/wallpaper_shuffle_list"
+CURRENT_INDEX_FILE="${WALLPAPER_DIR}/.shuffler/wallpaper_current_index"
+TOTAL_FILE="${WALLPAPER_DIR}/.shuffler/wallpaper_total"
+
+
+# Function definitions
+help() {
+cat << EOF
+    [Re]generate or iterate through a shuffled list of wallpapers
+
+    Usage:
+      shuffler [command] [wallpaper_dir]
+
+    Commands:
+      help      Show this help message
+      next      Go to next wallpaper
+      restore   Restore tracked position in shuffle queue
+      regen     Regenerate the shuffle list
+EOF
+}
+
+create_shuffle_list() {
+    echo "Creating new shuffle list..."
+
+    # Find all the images and put their names in a file
+    find "$WALLPAPER_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.gif" -o -iname "*.webp" \) >"$SHUFFLE_FILE.tmp"
+
+    # Make sure the file isn't empty
+    if [ ! -s "$SHUFFLE_FILE.tmp" ]; then
+        rm -f "$SHUFFLE_FILE.tmp"
+        echo "Error: No wallpaper images found in $WALLPAPER_DIR" >&2
+        exit 1
+    fi
+
+    # Shuffle the images and write it to the permanent place
+    shuf "$SHUFFLE_FILE.tmp" >"$SHUFFLE_FILE"
+    rm "$SHUFFLE_FILE.tmp"
+
+    # Write initial positions
+    wc -l <"$SHUFFLE_FILE" >"$TOTAL_FILE"
+    echo "0" >"$CURRENT_INDEX_FILE"
+
+    echo "Successfully created new shuffle list"
+}
+
+get_next_wallpaper() {
+    # Get current index, default to 0 if file doesn't exist
+    local current_index=0
+    [ -f "$CURRENT_INDEX_FILE" ] && current_index=$(<"$CURRENT_INDEX_FILE")
+
+    # Get total number of wallpapers
+    local total_wallpapers
+    total_wallpapers=$(wc -l <"$SHUFFLE_FILE")
+
+    # If we've reached the end, create a new shuffle list
+    if [ "$current_index" -ge "$total_wallpapers" ]; then
+        echo "Reached the end of shuffle list, reshuffling..."
+        create_shuffle_list
+        current_index=0
+    fi
+
+    # Get the next wallpaper (add 1 since sed uses 1-based indexing)
+    local next_wallpaper
+    next_wallpaper=$(sed -n "$((current_index + 1))p" "$SHUFFLE_FILE")
+
+    # Increment index for next time
+    echo "$((current_index + 1))" >"$CURRENT_INDEX_FILE"
+
+    echo "$next_wallpaper"
+}
+
+set_wallpaper() {
+    echo "Setting wallpaper..."
+
+    # Create shuffle list if nonexistant or empty
+    if [ ! -f "$SHUFFLE_FILE" ] || [ ! -s "$SHUFFLE_FILE" ]; then
+        create_shuffle_list
+    fi
+
+    # Compare position in list to actual current wallpaper
+    local current_index=1
+    local actual_index
+    local current_wallpaper
+    local actual_wallpaper
+    # Set current index if not equal to 0
+    [ "0" != "$(<"$CURRENT_INDEX_FILE")" ] && current_index=$(<"$CURRENT_INDEX_FILE")
+    # Get filename of what should be current wallpaper, based on $current_index
+    current_wallpaper=$(sed -n "$((current_index))p" "$SHUFFLE_FILE")
+    # Get filename of what is actually current wallpaper
+    actual_wallpaper=$("$SCRIPT_LOCATION"/getter)
+    # Get index of $actual_wallpaper
+    actual_index=$(grep -n "$actual_wallpaper" "$SHUFFLE_FILE" | cut -d : -f 1)
+
+    if [ "$current_index" != "$actual_index" ]; then
+        echo "You have deviated from shuffler's sequence, getting back on track"
+    fi
+
+    if [ "$1" = "next" ] ; then
+        next_wallpaper=$(get_next_wallpaper)
+        "$SCRIPT_LOCATION"/setter "$next_wallpaper"
+    elif [ "$1" = "current" ] ; then
+        "$SCRIPT_LOCATION"/setter "$current_wallpaper"
+    else
+        echo "Error: invalid arg to set_wallpaper()" >&2
+    fi
+}
+
+# Setup
+mkdir -p "$SCRIPT_LOCATION"
+mkdir -p "${WALLPAPER_DIR}/.shuffler"
+if [ ! -d "$WALLPAPER_DIR" ]; then
+    notify-send -a "Shuffler" "Error: wallpaper directory ${WALLPAPER_DIR} does not exist." "Please specify a valid directory."
+    exit 1
+fi
+
+
+# Main function
+if [ "$1" = "help" ] ; then
+    help
+elif [ "$1" = "next" ] ; then
+    set_wallpaper next
+elif [ "$1" = "restore" ] ; then
+    set_wallpaper current
+elif [ "$1" = "regen" ] ; then
+    create_shuffle_list
+    set_wallpaper next
+else
+    echo "Unknown command '$1'" >&2
+fi

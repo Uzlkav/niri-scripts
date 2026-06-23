@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# ~/scripts/wallpaper/setter
+
+WALLP=$1
+
+if [ "${XDG_CURRENT_DESKTOP}" = "niri" ]; then
+    # Dank Material Shell
+    if [ "$(qs list --all | grep --count dms)" = 1 ]; then
+        dms ipc call wallpaper set "$WALLP"
+    # Noctalia v5
+    elif [ $(pgrep noctalia) ]; then
+        noctalia msg wallpaper-set "$WALLP"
+    # Noctalia v4
+    elif [ "$(qs list --all | grep --count noctalia)" = 1 ]; then
+        noctalia-shell ipc call wallpaper set "$WALLP"
+    fi
+elif [ "${XDG_CURRENT_DESKTOP}" = "gnome" ]; then
+    gsettings set org.gnome.desktop.background picture-uri "$WALLP"
+else
+    echo "Background manager not known. Please add it."
+fi

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# ~/scripts/wallpaper/setter
+
+if [ "${XDG_CURRENT_DESKTOP}" = "niri" ]; then
+    echo "Desktop env is niri, checking shell..."
+    # Dank Material Shell
+    if [ "$(qs list --all | grep --count dms)" = 1 ]; then
+        dms ipc call wallpaper get
+    # Noctalia v4
+    elif [ "$(qs list --all | grep --count noctalia)" = 1 ]; then
+        noctalia-shell ipc call wallpaper get
+    # Noctalia v5
+    elif [ $(pgrep noctalia) ]; then
+        noctalia msg wallpaper-get
+    fi
+elif [ "${XDG_CURRENT_DESKTOP}" = "gnome" ]; then
+    echo "Desktop env is gnome, getting wallpaper..."
+    # Outputs something like
+    # 'file:///home/path/to/file/jpg'
+    # Then cuts of qoutes and file://
+    gsettings get org.gnome.desktop.background picture-uri | cut -c 9- | rev | cut -c 2- | rev
+else
+    echo "Background manager not known. Please add it."
+fi
