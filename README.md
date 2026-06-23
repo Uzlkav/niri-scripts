@@ -17,4 +17,4 @@ include optional=true "./dynamic/your_file.kdl"
 ./niri-dyanmics your_file.kdl
 ```
 
-This will toggle the inclusion of the file by renaming it, prefixing `no-` at the start by default. You can override this by changing the value of the `prefix` variable at the top of the script.
+This will toggle the inclusion of the file by renaming it, prefixing, or removing, `no-` at the start by default. You can override this by changing the value of the `prefix` variable at the top of the script.
