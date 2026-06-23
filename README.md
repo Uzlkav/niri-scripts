@@ -18,3 +18,18 @@ include optional=true "./dynamic/your_file.kdl"
 ```
 
 This will toggle the inclusion of the file by renaming it, prefixing, or removing, `no-` at the start by default. You can override this by changing the value of the `prefix` variable at the top of the script.
+
+## Shuffler
+This script generates a list of image files in a directory and shuffles it. It then steps through them in order. This somewhat avoids the [randomization problem](https://axlefublr.github.io/randomization-sucks) by not repeating a particular image until _all_ other images have been shown, but this might not be random enough for you.
+This is based on [this](https://github.com/Daniel-42-z/dms-wallpaper-shuffler) plugin for DMS, but can be used independently and with any wallpaper daemon.
+
+### Usage
+```
+shuffler [command] [wallpaper_dir]
+
+Commands:
+  help      Show this help message
+  next      Go to next wallpaper
+  restore   Restore tracked position in shuffle queue
+  regen     Regenerate the shuffle list
+```
