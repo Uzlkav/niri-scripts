@@ -9,15 +9,16 @@
 # this allows toggling any niri option at runtime.
 
 dynamic_file="$HOME/.config/niri/dynamic/$1"
+prefix="no-"
 
 if [ -f "$dynamic_file" ]; then                         # Check if file exists
     # File is ON
-    new_name="$HOME/.config/niri/dynamic/no-$1"         # Prepend no
+    new_name="$HOME/.config/niri/dynamic/$prefix$1"         # Prepend prefix
     echo "$new_name"
     mv "$dynamic_file" "$new_name"
 else
     # File if OFF
-    actual_name="$HOME/.config/niri/dynamic/no-$1"
+    actual_name="$HOME/.config/niri/dynamic/$prefix$1"
     echo "$new_name"
     mv "$actual_name" "$dynamic_file"
 fi
