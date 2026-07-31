@@ -12,6 +12,8 @@ Create a directory named `dynamic` in `~/.config/niri` and place the configurati
 include optional=true "./dynamic/your_file.kdl"
 ```
 
+It also has logic for files where you have more than an on/off state, the example being configuration for which terminal is opened. Only one `-term` include can be active at a time, and passing a different one into the script will deactivate other `-term` includes before activating the desired one.
+
 ### Usage:
 ```bash
 ./niri-dyanmics your_file.kdl

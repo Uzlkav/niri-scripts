@@ -4,21 +4,43 @@
 # ./niri-dynamics dynamic-file.kdl
 # Name of file passed should be the name when the file is ON
 
-# Takes one argument as the name of a file in ~/.config/niri/dynamics/ and adds
+# Takes one argument as the name of a file in ~/.config/niri/dynamic/ and adds
 # or removes `no-` to the start of its name. If the file is then included as optional,
 # this allows toggling any niri option at runtime.
 
-dynamic_file="$HOME/.config/niri/dynamic/$1"
+# Not using basename becuase $base is not always what the file is actually named
+base=$1
+dir="$HOME/.config/niri/dynamic"
+# The name of the file we're working on, *if* it were to be turned ON
+dynamic_file="$dir/$base"
 prefix="no-"
 
+add_prefix() {
+    new_name="$dir/$prefix$base"
+    mv -v -- "$1" "$new_name"
+}
+strip_prefix() {
+    actual_name="$dir/$prefix$base"
+    mv -v -- "$actual_name" "$1"
+}
+
+# Turn off all -term includes IF the file we're working on is a -term one
+# This means -term files don't toggle, only replace eachother;
+# you never want to be left without a terminal bind
+if [[ "$base" == *"-term.kdl" ]]; then
+    find ~/.config/niri/dynamic -type f -name '*-term.kdl' -not -name 'no-*' -execdir sh -c '
+        # Basically a recreation of add_prefix
+        for f; do
+            find_base=$(basename $f)
+            mv -v -- "$f" "./no-$find_base"
+        done
+    ' sh {} \;
+fi
+
 if [ -f "$dynamic_file" ]; then                         # Check if file exists
-    # File is ON
-    new_name="$HOME/.config/niri/dynamic/$prefix$1"         # Prepend prefix
-    echo "$new_name"
-    mv "$dynamic_file" "$new_name"
+    # File is ON, turn OFF
+    add_prefix "$dynamic_file"
 else
-    # File if OFF
-    actual_name="$HOME/.config/niri/dynamic/$prefix$1"
-    echo "$new_name"
-    mv "$actual_name" "$dynamic_file"
+    # File if OFF, turn ON
+    strip_prefix "$dynamic_file"
 fi
